@@ -1,0 +1,4 @@
+blockstack:
+  blockstack_api:
+    client: true
+    default: "http://localhost:6270"

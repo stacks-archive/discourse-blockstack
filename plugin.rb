@@ -17,18 +17,22 @@ require 'uri'
 class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
   def register_middleware(omniauth)
     omniauth.provider :blockstack,
-                      :app_name => SiteSetting.title,
-                      :app_description => SiteSetting.site_description,
-                      :app_icons => [
-                        { :src => lambda {
-                          url = URI(SiteSetting.logo_small_url)
-                          url = "#{Discourse.base_url}#{url}" unless url.absolute?
-                          url.to_s
-                        }.call
-                      }
+                      :setup => lambda { |env|
+                              strategy = env["omniauth.strategy"]
+                              strategy.options[:app_name] = SiteSetting.title
+                              strategy.options[:app_description] = SiteSetting.site_description
+                              strategy.options[:app_icons] = [
+                                { :src => lambda {
+                                  url = URI(SiteSetting.logo_small_url)
+                                  url = "#{Discourse.base_url}#{url}" unless url.absolute?
+                                  url.to_s
+                                }.call
+                              }
+                            ]
+                              strategy.options[:blockstack_api] = SiteSetting.blockstack_api.chomp("/")
+                            }
 
-                      ],
-                      :blockstack_api => 'http://localhost:6270'
+
 
   end
 

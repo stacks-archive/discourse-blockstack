@@ -1,0 +1,3 @@
+en:
+  site_settings:
+    blockstack_api: "The Blockstack API your Discourse instance will trust to verify users own the usernames they claim."
