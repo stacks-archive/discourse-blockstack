@@ -1,3 +1,7 @@
 en:
   site_settings:
     blockstack_api: "The Blockstack API your Discourse instance will trust to verify users own the usernames they claim."
+    blockstack_sync_name: "Sync user's name to Blockstack ID on each authentication."
+    blockstack_sync_description: "Sync user's bio to Blockstack ID description on each authentication."
+    blockstack_sync_location: "Sync user's location to Blockstack ID on each authentication."
+    blockstack_sync_website: "Sync user's website to Blockstack ID on each authentication."

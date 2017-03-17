@@ -1,4 +1,16 @@
-blockstack:
+plugins:
   blockstack_api:
     client: true
     default: "http://localhost:6270"
+  blockstack_sync_name:
+    client: true
+    default: false
+  blockstack_sync_description:
+    client: true
+    default: false
+  blockstack_sync_location:
+    client: true
+    default: false
+  blockstack_sync_website:
+    client: true
+    default: false
