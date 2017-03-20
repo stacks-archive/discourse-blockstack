@@ -2,6 +2,12 @@ plugins:
   blockstack_api:
     client: true
     default: "http://localhost:6270"
+  blockstack_id_owns_forum_account:
+    client: true
+    default: false
+  blockstack_id_without_tld_owns_forum_account:
+    client: true
+    default: false
   blockstack_sync_name:
     client: true
     default: false

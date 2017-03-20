@@ -46,30 +46,34 @@ class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
     result.user = get_user_by_blockstack_did(did)
 
     if result.user
-      # We found a user that has logged in with this Blockstack DID before
+      debug_log "Found a user that previously logged in with DID #{did}"
       sync_blockstack_info(result.user, auth[:info])
-    elsif result.username
-      # No user with this Blockstack DID has logged in before & user has claimed
-      # a Blockstack ID
+    elsif blockstack_id
+      debug_log "No user previously logged in with did #{did}, but Blockstack ID #{blockstack_id } is claimed."
       existing_user = User.where(username: blockstack_id).first
-      if existing_user
-        Rails.logger.debug "User with matching Blockstack ID #{blockstack_id} has never logged in with Blockstack"
+      if existing_user && SiteSetting.blockstack_id_owns_forum_account
+        debug_log "User with matching Blockstack ID #{blockstack_id} has never logged in with Blockstack"
         result.user = existing_user # log in this user
-      else
-        Rails.logger.debug "No user with blockstack id #{blockstack_id}."
-        username_without_tld = blockstack_id.split(".")[0]
-        existing_user = User.where(username: username_without_tld).first
+      end
+      if SiteSetting.blockstack_id_without_tld_owns_forum_account
         if existing_user
-          Rails.logger.debug "Found existing user matching Blockstack ID minus TLD: #{username_without_tld}"
+          debug_log "Found a discourse user with username that matches Blockstack ID so blockstack_id_without_tld_owns_forum_account has no effect."
+        else
+          debug_log "No discourse user with Blockstack ID #{blockstack_id} - let's look for one without the TLD"
+          username_without_tld = blockstack_id.split(".")[0]
+          existing_user = User.where(username: username_without_tld).first
+          if existing_user
+            debug_log "Found existing discourse user matching Blockstack ID minus TLD: #{username_without_tld}"
 
-          result.user = existing_user # log in this user
+            result.user = existing_user # log in this user
 
-          Rails.logger.debug "Trying to change #{username_without_tld}'s username to #{blockstack_id}'"
-          # try to change username to fully qualified blockstack id
-          change_result = ::UsernameChanger.change(existing_user, blockstack_id, nil)
-          if change_result != true
-            Rails.logger.debug "Failed to change #{username_without_tld}'s username to #{blockstack_id}'"
-            Rails.logger.debug "This will happen if #{blockstack_id}'s DID changed."
+            debug_log "Trying to change #{username_without_tld}'s username to #{blockstack_id}'"
+            # try to change username to fully qualified blockstack id
+            change_result = ::UsernameChanger.change(existing_user, blockstack_id, nil)
+            if change_result != true
+              debug_log "Failed to change #{username_without_tld}'s username to #{blockstack_id}'"
+              debug_log "This will happen if #{blockstack_id}'s DID changed."
+            end
           end
         end
       end
@@ -77,12 +81,13 @@ class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
       if result.user
         # We found a user
         link_user_with_blockstack_did(result.user, did)
-      else
-        # This is a new user
-        # Set their username
-        result.username = blockstack_id ? blockstack_id : Blockstack.get_address_from_did(did)
-        result.email_valid = false
       end
+    end
+
+    if result.user.nil?  # This is a new user
+      # Set their username
+      result.username = blockstack_id ? blockstack_id : Blockstack.get_address_from_did(did)
+      result.email_valid = false
     end
 
     result.extra_data = { blockstack_did: did, info: auth[:info] }
@@ -109,7 +114,7 @@ class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
   end
 
   def sync_blockstack_info(user, info)
-    Rails.logger.debug("sync_blockstack_info #{info}")
+    debug_log("sync_blockstack_info #{info}")
 
     user_profile = user.user_profile
 
@@ -140,6 +145,10 @@ class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
     # is more complicated than text fields.
     # If you see this comment, feel free to add support and send
     # a pull request!
+  end
+
+  def debug_log(message)
+    Rails.logger.debug "discourse-blockstack: #{message}"
   end
 end
 
