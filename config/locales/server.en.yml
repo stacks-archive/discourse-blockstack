@@ -3,6 +3,7 @@ en:
     blockstack_api: "The Blockstack API your Discourse instance will trust to verify users own the usernames they claim."
     blockstack_id_owns_forum_account: "Assume Blockstack ID owns discourse account with same username."
     blockstack_id_without_tld_owns_forum_account: "Assume Blockstack ID without TLD owns discourse account with same username."
+    blockstack_sync_avatar: "Sync user's avatar to Blockstack ID on each authentication."
     blockstack_sync_name: "Sync user's name to Blockstack ID on each authentication."
     blockstack_sync_description: "Sync user's bio to Blockstack ID description on each authentication."
     blockstack_sync_location: "Sync user's location to Blockstack ID on each authentication."

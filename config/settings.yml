@@ -8,6 +8,9 @@ plugins:
   blockstack_id_without_tld_owns_forum_account:
     client: true
     default: false
+  blockstack_sync_avatar:
+    client: true
+    default: false
   blockstack_sync_name:
     client: true
     default: false

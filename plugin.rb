@@ -97,9 +97,6 @@ class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
   def after_create_account(user, auth)
     link_user_with_blockstack_did(user, auth[:extra_data][:blockstack_did])
     sync_blockstack_info(user, auth[:extra_data][:info])
-
-    # consider marking user as active to skip create account dialog
-    # user.active = true
   end
 
   protected
@@ -117,6 +114,16 @@ class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
     debug_log("sync_blockstack_info #{info}")
 
     user_profile = user.user_profile
+
+
+    if info[:image] && SiteSetting.blockstack_sync_avatar
+      begin
+        image_uri = URI::parse(info[:image])
+        ::Jobs.enqueue(:download_avatar_from_url, url: image_uri.to_s, user_id: user.id, override_gravatar: true)
+      rescue URI::InvalidURIError => error
+        debug_log "User id #{user.id} has an invalid url as their Blockstack ID avatar"
+      end
+    end
 
     if SiteSetting.blockstack_sync_name && info.name
       user.name = info.name
