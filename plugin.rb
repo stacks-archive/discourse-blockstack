@@ -17,7 +17,7 @@ require 'uri'
 class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
   def register_middleware(omniauth)
     # Blockstack IDs can be up to 60 characters long
-    SiteSetting.max_username_length = 60
+    # SiteSetting.max_username_length = 60
 
 
     omniauth.provider :blockstack,
@@ -35,45 +35,78 @@ class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
                             ]
                               strategy.options[:blockstack_api] = SiteSetting.blockstack_api.chomp("/")
                             }
-
-
-
   end
 
   def after_authenticate(auth)
     result = Auth::Result.new
-    uid = auth[:uid]
+    did = auth[:uid]
     result.name = auth[:info].name
-    result.username = auth[:info].nickname ? auth[:info].nickname : Blockstack.get_address_from_did(uid)
-    result.email_valid = false
+    blockstack_id = auth[:info].nickname
 
-    current_info = ::PluginStore.get("blockstack", "blockstack_user_#{uid}")
-    if current_info
-      result.user = User.where(id: current_info[:user_id]).first
+    result.user = get_user_by_blockstack_did(did)
+
+    if result.user
+      # We found a user that has logged in with this Blockstack DID before
       sync_blockstack_info(result.user, auth[:info])
-    # TODO Finish writing logic to change username to blockstack id
-    # elsif result.username
-    #   username_without_tld = result.username.split(".")[0]
-    #   existing_user = User.where(username: username_without_tld)
-    #   if existing_user
-    #     remaining_tries = 5
-    #     while remaining_tries > 0 && result.user.nil?
-    #     # change username to blockstack id
-    #     result = UsernameChanger.change(existing_user, result.username, nil)
-    #     result.user = existing_user if result
-    #     remaining_tries--
-    #   end
+    elsif result.username
+      # No user with this Blockstack DID has logged in before & user has claimed
+      # a Blockstack ID
+      existing_user = User.where(username: blockstack_id).first
+      if existing_user
+        Rails.logger.debug "User with matching Blockstack ID #{blockstack_id} has never logged in with Blockstack"
+        result.user = existing_user # log in this user
+      else
+        Rails.logger.debug "No user with blockstack id #{blockstack_id}."
+        username_without_tld = blockstack_id.split(".")[0]
+        existing_user = User.where(username: username_without_tld).first
+        if existing_user
+          Rails.logger.debug "Found existing user matching Blockstack ID minus TLD: #{username_without_tld}"
+
+          result.user = existing_user # log in this user
+
+          Rails.logger.debug "Trying to change #{username_without_tld}'s username to #{blockstack_id}'"
+          # try to change username to fully qualified blockstack id
+          change_result = ::UsernameChanger.change(existing_user, blockstack_id, nil)
+          if change_result != true
+            Rails.logger.debug "Failed to change #{username_without_tld}'s username to #{blockstack_id}'"
+            Rails.logger.debug "This will happen if #{blockstack_id}'s DID changed."
+          end
+        end
+      end
+
+      if result.user
+        # We found a user
+        link_user_with_blockstack_did(result.user, did)
+      else
+        # This is a new user
+        # Set their username
+        result.username = blockstack_id ? blockstack_id : Blockstack.get_address_from_did(did)
+        result.email_valid = false
+      end
     end
-    result.extra_data = { blockstack_user_id: uid, info: auth[:info] }
+
+    result.extra_data = { blockstack_did: did, info: auth[:info] }
     result
   end
 
   def after_create_account(user, auth)
-    ::PluginStore.set("blockstack", "blockstack_user_#{auth[:extra_data][:blockstack_user_id]}", {user_id: user.id })
+    link_user_with_blockstack_did(user, auth[:extra_data][:blockstack_did])
     sync_blockstack_info(user, auth[:extra_data][:info])
+
+    # consider marking user as active to skip create account dialog
+    # user.active = true
   end
 
   protected
+
+  def link_user_with_blockstack_did(user, did)
+    ::PluginStore.set("blockstack", "blockstack_user_#{did}", {user_id: user.id })
+  end
+
+  def get_user_by_blockstack_did(did)
+    current_info = ::PluginStore.get("blockstack", "blockstack_user_#{did}")
+    current_info.nil? ? nil : User.where(id: current_info[:user_id]).first
+  end
 
   def sync_blockstack_info(user, info)
     Rails.logger.debug("sync_blockstack_info #{info}")
