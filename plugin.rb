@@ -16,6 +16,10 @@ require 'uri'
 
 class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
   def register_middleware(omniauth)
+    # Blockstack IDs can be up to 60 characters long
+    SiteSetting.max_username_length = 60
+
+
     omniauth.provider :blockstack,
                       :setup => lambda { |env|
                               strategy = env["omniauth.strategy"]
