@@ -1,6 +1,6 @@
 # name: discourse-blockstack
 # about: Blockstack Auth Provider
-# version: 0.5
+# version: 0.6.0
 # author: Larry Salibra
 
 require_dependency 'auth/oauth2_authenticator'
@@ -13,6 +13,9 @@ gem "omniauth-blockstack", "0.10.0", require: false
 require 'omniauth/blockstack'
 require 'blockstack'
 require 'uri'
+
+
+register_asset 'stylesheets/blockstack.scss'
 
 class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
   def register_middleware(omniauth)
