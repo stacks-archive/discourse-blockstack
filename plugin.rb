@@ -1,6 +1,6 @@
 # name: discourse-blockstack
 # about: Blockstack Auth Provider
-# version: 0.4
+# version: 0.5
 # author: Larry Salibra
 
 require_dependency 'auth/oauth2_authenticator'
