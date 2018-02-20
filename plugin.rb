@@ -1,13 +1,13 @@
 # name: discourse-blockstack
 # about: Blockstack Auth Provider
-# version: 0.6.5
+# version: 0.6.6
 # author: Larry Salibra
 
 require_dependency 'auth/oauth2_authenticator'
 gem "bitcoin-ruby", "0.0.10", require: false
 gem "jwtb", "2.0.0.beta2.bsk1", require: false
 gem "blockstack", "0.5.9", require: false
-gem "omniauth-blockstack", "0.10.5", require: false
+gem "omniauth-blockstack", "0.10.6", require: false
 
 
 require 'omniauth/blockstack'
