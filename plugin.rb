@@ -7,7 +7,7 @@ require_dependency 'auth/oauth2_authenticator'
 gem "bitcoin-ruby", "0.0.10", require: false
 gem "jwtb", "2.0.0.beta2.bsk1", require: false
 gem "blockstack", "8.0.0", require: false
-gem "omniauth-blockstack", "19.1.0", require: false
+gem "omniauth-blockstack", "19.1.1", require: false
 
 
 require 'omniauth/blockstack'
