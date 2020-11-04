@@ -30,7 +30,7 @@ class BlockstackAuthenticator < ::Auth::OAuth2Authenticator
                               strategy.options[:app_description] = SiteSetting.site_description
                               strategy.options[:app_icons] = [
                                 { :src => lambda {
-                                  url = URI(SiteSetting.logo_small_url)
+                                  url = URI(SiteSetting.logo_small)
                                   url = "#{Discourse.base_url}#{url}" unless url.absolute?
                                   url.to_s
                                 }.call
